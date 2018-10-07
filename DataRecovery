@@ -1,0 +1,50 @@
+CentOS 6 安裝 extundelete::
+
+##############测试的时候需要2块硬盘###############
+
+yum install e2fsprogs-devel e2fsprogs e2fsprogs-libs gcc*
+wget http://gnutoolbox.com/download/linux/hdd/extundelete-0.2.0.tar
+tar xf extundelete-0.2.0.tar
+cd extundelete-0.2.0
+./configure
+make &&make install
+
+
+vim /etc/fstab(在最后添加)
+/dev/sdb1   /mnt/usb2   ext3   defaults   0   0
+/dev/sdb2   /mnt/usb3   ext3   defaults   0   0
+
+第二块硬盘为/dev/sdb,挂载点为/mnt/usb3
+
+
+[root@bogon ~]# cd /mnt/usb3
+[root@bogon usb3]# mkdir kkkk
+[root@bogon usb3]# cd kkkk/
+[root@bogon kkkk]# touch test{1..20}
+[root@bogon kkkk]# cd ..
+[root@bogon usb3]# vim 123.sh
+#####################################
+#!/bin/bash
+dir=/mnt/usb3/kkkk/
+cd $dir
+ls > 1.txt
+for i in `cat 1.txt`
+do
+echo "123456789" > $i
+done
+######################################
+[root@bogon usb3]# chmod +x 123.sh 
+[root@bogon usb3]# ./123.sh 
+[root@bogon usb3]# cd kkkk/
+[root@bogon kkkk]# rm -rf test{1..10}
+
+
+现在开始恢复删除掉的test1 -- test10文件：
+[root@bogon usb3]# extundelete /dev/sdb2 --restore-all	　　        #恢复所有
+　　　　　　　　  
+    [extundelete /dev/sdb2 --restore-file home/user/file.pdf	　　#也可以恢复某单个文件
+    extundelete /dev/sdb2 --restore-directory home/user	　　        #也可以恢复指定的目录 
+    ]
+
+注意：
+恢复出来的文件在哪执行，就会在“当前”目录下再次生成一个名为“RECOVERED_FILES”的目录，进去这个目录中就能看到恢复出来的文件
